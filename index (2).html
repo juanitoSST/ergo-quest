@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ergo-Quest Elite: Vigilancia de Síntomas Musculoesqueléticas | UHO S.A.S.</title>
+    <style>
+        :root {
+            --neon-blue: #00f2fe;
+            --neon-green: #00e676;
+            --game-success: #10b981;
+            --game-error: #f43f5e;
+            --game-warning: #fbbf24;
+            --dark-arcade: #090d16;
+            --card-arcade: #131c2e;
+            --text-glow: #f8fafc;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--dark-arcade);
+            color: var(--text-glow);
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 15px;
+            box-sizing: border-box;
+        }
+
+        .arcade-card {
+            background: var(--card-arcade);
+            padding: 35px;
+            border-radius: 24px;
+            box-shadow: 0 0 30px rgba(0, 242, 254, 0.12);
+            border: 2px solid #1e293b;
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #0b111e;
+            padding: 15px 30px;
+            border-radius: 50px;
+            border: 2px solid #1e293b;
+            margin-bottom: 25px;
+        }
+
+        .hud-item {
+            font-weight: bold;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .xp-badge { color: var(--neon-blue); text-shadow: 0 0 10px rgba(0,242,254,0.4); }
+        .lives-badge { color: var(--game-error); }
+        .combo-badge { color: var(--neon-green); animation: pulseSuccess 0.4s infinite alternate; display: none; }
+
+        .game-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+        }
+
+        @media(min-width: 900px) {
+            .game-layout { grid-template-columns: 400px 1fr; }
+        }
+
+        .silhouette-container {
+            background: #060a12;
+            border-radius: 20px;
+            padding: 20px;
+            border: 2px dashed #223759;
+            text-align: center;
+            box-shadow: inset 0 0 25px rgba(0,0,0,0.9);
+        }
+
+        .interactive-silhouette {
+            width: 100%;
+            max-height: 520px;
+            filter: drop-shadow(0px 0px 15px rgba(0, 242, 254, 0.25));
+        }
+
+        .body-zone {
+            fill: #1f2d47;
+            stroke: #3b527a;
+            stroke-width: 1.2;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .body-zone:hover {
+            fill: var(--neon-blue) !important;
+            stroke: #fff;
+            filter: drop-shadow(0 0 10px var(--neon-blue));
+        }
+
+        .zone-safe { fill: var(--game-success) !important; opacity: 0.85; }
+        .zone-warning { fill: var(--game-warning) !important; opacity: 0.85; }
+        .zone-danger { fill: var(--game-error) !important; opacity: 0.85; }
+
+        .grid-options {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 14px;
+            margin: 18px 0;
+        }
+
+        .game-btn {
+            background: #1a263f;
+            border: 2px solid #2e436a;
+            color: white;
+            padding: 16px 20px;
+            border-radius: 16px;
+            cursor: pointer;
+            text-align: left;
+            font-size: 0.95rem;
+            font-weight: 500;
+            line-height: 1.4;
+            transition: transform 0.1s ease, background 0.2s ease, border-color 0.2s ease;
+        }
+
+        .game-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            background: #233557;
+            border-color: var(--neon-blue);
+            box-shadow: 0 5px 15px rgba(0,242,254,0.15);
+        }
+
+        .btn-correct {
+            background: #043e2e !important;
+            border-color: var(--game-success) !important;
+            box-shadow: 0 0 15px rgba(16,185,129,0.35);
+        }
+
+        .btn-wrong {
+            background: #3f0415 !important;
+            border-color: var(--game-error) !important;
+            box-shadow: 0 0 15px rgba(244,63,94,0.35);
+        }
+
+        .quest-box {
+            background: #0f172a;
+            border-radius: 18px;
+            padding: 25px;
+            border-left: 6px solid var(--neon-blue);
+            margin-bottom: 20px;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .btn-action-next {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: #050914;
+            font-weight: bold;
+            border: none;
+            padding: 18px;
+            border-radius: 14px;
+            font-size: 1rem;
+            cursor: pointer;
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            box-shadow: 0 5px 18px rgba(0,242,254,0.3);
+            transition: all 0.2s ease;
+        }
+
+        .btn-action-next:hover {
+            filter: brightness(1.15);
+            box-shadow: 0 6px 22px rgba(0,242,254,0.5);
+        }
+
+        .hidden-section { display: none; }
+        .trivia-progress-bar { width: 100%; background: #1e293b; height: 6px; border-radius: 10px; margin-top: 10px; overflow: hidden; }
+        .trivia-progress-fill { height: 100%; background: var(--neon-blue); width: 0%; transition: width 0.3s ease; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulseSuccess { from { transform: scale(1); } to { transform: scale(1.05); } }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+
+        <!-- PANTALLA 1: REGISTRO E INTRODUCCIÓN -->
+        <div id="screen-intro" class="arcade-card" style="text-align: center; max-width: 650px; margin: 40px auto;">
+            <div style="font-size: 4rem; margin-bottom: 10px;">🛡️</div>
+            <h1 style="margin: 0; font-size: 2.3rem; background: linear-gradient(to right, #00f2fe, #4facfe); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 1px; font-weight: 800;">VIGILANCIA DE SÍNTOMAS MUSCULOESQUELÉTICAS</h1>
+            <h3 style="color: #64748b; font-weight: 400; margin-top: 5px; margin-bottom: 25px;">Misión Autocuidado Elite | UHO S.A.S.</h3>
+            
+            <div style="text-align: left; background: #0b111e; padding: 20px; border-radius: 16px; border: 1px solid #1e293b; margin-bottom: 25px; font-size: 0.95rem; line-height: 1.5; color: #94a3b8;">
+                <b style="color: white; display: block; margin-bottom: 5px;">🎮 Reglas de la Misión:</b>
+                Cada zona corporal que toques iniciará una <strong>Campaña Completa de 4 Niveles Teóricos</strong>. Deberás responder preguntas de opción múltiple sobre tu entorno, pausas y factores de riesgo. ¡Mantén tus vidas a salvo y genera combos para romper el récord de XP!
+            </div>
+
+            <div style="text-align: left;">
+                <label style="font-size: 0.85rem; text-transform: uppercase; color: var(--neon-blue); letter-spacing: 0.05em; font-weight: bold;">Nombre del Operador / Trabajador:</label>
+                <input type="text" id="player-name" placeholder="Ingresa tu identidad..." style="width:100%; padding:15px; background:#070a13; border:2px solid #223759; border-radius:12px; color:white; font-size:1rem; margin:8px 0 20px 0; box-sizing: border-box;">
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px;">
+                    <div>
+                        <label style="font-size: 0.85rem; text-transform: uppercase; color: var(--neon-blue); font-weight: bold;">Estructura Biológica:</label>
+                        <select id="player-gender" style="width:100%; padding:15px; background:#070a13; border:2px solid #223759; border-radius:12px; color:white; font-size: 0.95rem;">
+                            <option value="femenino">Estructura Femenina</option>
+                            <option value="masculino">Estructura Masculina</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size: 0.85rem; text-transform: uppercase; color: var(--neon-blue); font-weight: bold;">Gremio / Perfil de Riesgo:</label>
+                        <select id="player-profile" style="width:100%; padding:15px; background:#070a13; border:2px solid #223759; border-radius:12px; color:white; font-size: 0.95rem;">
+                            <option value="Asistencial">Asistencial / Clínico Hospitalario</option>
+                            <option value="Administrativo">Administrativo / Oficina / Teletrabajo</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button class="btn-action-next" onclick="iniciarAventura()">Iniciar Campaña Interactiva ➔</button>
+            </div>
+        </div>
+
+        <!-- PANTALLA 2: MUNDO PRINCIPAL DEL JUEGO -->
+        <div id="screen-game" class="hidden-section">
+            
+            <!-- CONTROLES HUD -->
+            <div class="game-header">
+                <div>
+                    <div id="hud-name" style="font-weight: bold; color: white; font-size: 1.1rem;">-</div>
+                    <div id="hud-class" style="font-size: 0.75rem; color: #64748b; font-weight: bold; letter-spacing: 0.05em;">-</div>
+                </div>
+                <div style="display: flex; gap: 25px; align-items: center;">
+                    <div id="hud-combo" class="hud-item combo-badge">🔥 COMBO X<span id="combo-value">1</span></div>
+                    <div class="hud-item xp-badge">✨ <span id="hud-xp">0</span> XP</div>
+                    <div class="hud-item lives-badge">❤️ <span id="hud-lives">3</span></div>
+                    <div class="hud-item" style="color: #a78bfa;">🗺️ Progreso: <span id="hud-progress">0/3 Zonas</span></div>
+                </div>
+            </div>
+
+            <div class="game-layout">
+                
+                <!-- SILUETA INTERACTIVA SVG (AMPLIADA CON MÁS OPCIONES) -->
+                <div class="silhouette-container">
+                    <h3 style="margin: 0 0 12px 0; font-size: 0.85rem; color: var(--neon-blue); letter-spacing: 0.05em; font-weight: bold;">🎯 ESCANER INMERSIVO: TOCA TU PUNTO DE DOLOR</h3>
+                    <div id="map-root">
+                        <!-- El SVG se carga de manera reactiva por JS -->
+                    </div>
+                </div>
+
+                <!-- SECCIÓN DINÁMICA DE TRIVIA Y PASOS METODOLÓGICOS -->
+                <div>
+                    
+                    <!-- FASE 1: RECOPILACIÓN INICIAL -->
+                    <div id="quest-phase-frequency" class="quest-box hidden-section" style="border-color: var(--game-warning);">
+                        <h3 style="margin:0 0 15px 0; color: var(--game-warning);">⚡ Nivel 1: Bitácora de Exposición</h3>
+                        
+                        <p style="margin: 0 0 8px 0; font-size: 0.95rem; color: #cbd5e1;">¿Con qué frecuencia se manifiesta la fatiga en esta zona?</p>
+                        <div class="grid-options" style="grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <button id="f-horas" class="game-btn" onclick="setFrecuencia('horas', this)">⏱️ Episodios cortos (Por horas)</button>
+                            <button id="f-dias" class="game-btn" onclick="setFrecuencia('todos-los-dias', this)">🗓️ Presencia continua (A diario)</button>
+                        </div>
+
+                        <p style="margin: 15px 0 8px 0; font-size: 0.95rem; color: #cbd5e1;">¿Qué ocurre con el síntoma cuando cesan las labores?</p>
+                        <div class="grid-options" style="grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <button id="c-mejora" class="game-btn" onclick="setComportamiento('mejora', this)">💤 Alivia con el reposo</button>
+                            <button id="c-frecuente" class="game-btn" onclick="setComportamiento('frecuente', this)">🔥 Persiste incluso descansando</button>
+                        </div>
+
+                        <button class="btn-action-next" style="margin-top: 15px; font-size: 0.85rem;" onclick="bloquearFrecuencia()">Validar Antecedente Mecánico ➔</button>
+                    </div>
+
+                    <!-- FASE 2: CRONOLOGÍA DE IMPACTO -->
+                    <div id="quest-phase-timeline" class="quest-box hidden-section" style="border-color: #a78bfa;">
+                        <h3 style="margin:0 0 12px 0; color: #a78bfa;">⏳ Nivel 2: Cronología de Antigüedad</h3>
+                        <p style="margin: 0 0 15px 0; font-size: 0.95rem; color: #cbd5e1;">¿Hace cuánto tiempo convives con molestias en este mismo segmento corporal?</p>
+                        <div class="grid-options">
+                            <button class="game-btn" onclick="calcularImpactoSemaforo('verde')">🟢 Etapa Temprana (Molestias surgidas en los últimos meses)</button>
+                            <button class="game-btn" onclick="calcularImpactoSemaforo('amarillo')">🟡 Etapa Avanzada (Entre 1 y 4 años experimentándolo)</button>
+                            <button class="game-btn" onclick="calcularImpactoSemaforo('rojo')">🔴 Etapa Consolidada (Más de 5 años con episodios intermitentes)</button>
+                        </div>
+                    </div>
+
+                    <!-- RECUADRO INFORMATIVO DE CLASIFICACIÓN CLÍNICA ERGONÓMICA -->
+                    <div id="quest-phase-report" class="quest-box hidden-section">
+                        <h4 id="report-title" style="margin:0 0 6px 0;">-</h4>
+                        <p id="report-body" style="margin:0; font-size:0.95rem; line-height:1.5; color: #cbd5e1;"></p>
+                    </div>
+
+                    <!-- FASE 3: BANCO DE TRIVIAS EXPANDIDO (MULTINIVEL) -->
+                    <div id="quest-phase-trivia" class="quest-box hidden-section" style="border-color: var(--neon-blue);">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <h3 id="trivia-step-title" style="margin:0; color: var(--neon-blue);">💡 Desafío de Campo: Pregunta 1/4</h3>
+                            <span id="trivia-points-indicator" style="font-size: 0.8rem; background: #223759; padding: 4px 12px; border-radius: 12px; font-weight: bold; color: var(--neon-blue);">+100 XP</span>
+                        </div>
+                        <div class="trivia-progress-bar">
+                            <div id="trivia-progress-fill" class="trivia-progress-fill"></div>
+                        </div>
+
+                        <p id="trivia-question-text" style="font-size: 1rem; margin: 20px 0 15px 0; line-height: 1.5; font-weight: 500; color: white;"></p>
+                        <div id="trivia-options-zone" class="grid-options"></div>
+                        
+                        <!-- EXPLICACIÓN DIDÁCTICA REVELADA POST-RESPUESTA -->
+                        <div id="trivia-explanation" class="hidden-section" style="margin-top: 15px; background: #060a12; padding: 15px; border-radius: 10px; font-size: 0.9rem; border: 1px solid #1e293b; color: #94a3b8; line-height: 1.5;">
+                        </div>
+                    </div>
+
+                    <button id="btn-next-step" class="btn-action-next hidden-section" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);" onclick="controlarFlujoCampana()">Siguiente Nivel de Desafío ➔</button>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- PANTALLA 3: ACTA FINAL DE RESULTADOS -->
+        <div id="screen-game-over" class="arcade-card hidden-section" style="text-align: center;">
+            <h1 id="end-game-title" style="margin:0; font-size: 2.8rem;">🏆 Misión Finalizada</h1>
+            <p id="end-game-subtitle" style="color: #94a3b8; margin: 5px 0 30px 0; font-size: 1.1rem;"></p>
+
+            <div style="display: flex; justify-content: center; gap: 30px; margin-bottom: 35px;">
+                <div style="background: #0b111e; padding: 20px 40px; border-radius: 20px; border: 2px solid #1e293b;">
+                    <div style="font-size: 0.85rem; color: #64748b; font-weight: bold; letter-spacing: 0.05em;">PUNTUACIÓN TOTAL ACUMULADA</div>
+                    <div id="final-xp" style="font-size: 2.4rem; font-weight: bold; color: var(--neon-blue);">0 XP</div>
+                </div>
+                <div style="background: #0b111e; padding: 20px 40px; border-radius: 20px; border: 2px solid #1e293b;">
+                    <div style="font-size: 0.85rem; color: #64748b; font-weight: bold; letter-spacing: 0.05em;">RESERVA DE CORAZONES</div>
+                    <div id="final-lives" style="font-size: 2.4rem; font-weight: bold; color: var(--game-error);">❤️ 0</div>
+                </div>
+            </div>
+
+            <div style="background: #0f172a; text-align: left; padding: 30px; border-radius: 20px; border: 2px solid #1e293b; margin-bottom: 30px;">
+                <h3 style="color: var(--neon-blue); margin: 0 0 15px 0; font-size: 1.2rem; border-bottom: 1px solid #1e293b; padding-bottom: 10px;">🛠️ Plan de Contención e Intervención Ergonómica Personalizado</h3>
+                <ul id="final-prescriptions" style="padding-left: 20px; color: #cbd5e1; line-height: 1.7; margin: 0; font-size: 1rem;"></ul>
+            </div>
+
+            <button class="btn-action-next" style="background: #334155; max-width: 320px;" onclick="location.reload()">🔄 Reiniciar Simulación</button>
+        </div>
+
+    </div>
+
+<script>
+    // BANCO DE DATOS EXPANDIDO: 4 PREGUNTAS CON MÁS OPCIONES POR CADA ZONA
+    const bancoPreguntasGamer = {
+        Administrativo: {
+            "nuca-cuello": [
+                { q: "NIVEL I (Entorno): Sientes rigidez en la nuca al digitar informes prolongados. ¿Cuál es el principal causante físico en tu puesto?", opciones: [{t: "Tener la pantalla del monitor muy baja o desviada lateralmente, forzando postura flexionada.", c: true}, {t: "Utilizar un mouse inalámbrico sin soporte de almohadilla.", c: false}, {t: "Trabajar con una iluminación ambiental muy alta.", c: false}], exp: "Tener la pantalla baja obliga a tus músculos cervicales posteriores a cargar estáticamente los 5kg de tu cabeza inclinada hacia adelante." },
+                { q: "NIVEL II (Hábitos): Al responder llamadas constantes mientras digitas, ¿cuál es la conducta más lesiva para tu zona cervical?", opciones: [{t: "Sostener el auricular atrapado presionándolo rígidamente entre el hombro y la oreja.", c: true}, {t: "Sostener el teléfono con la mano contraria al brazo del mouse.", c: false}, {t: "Suspender la digitación por completo mientras dura la llamada.", c: false}], exp: "Atrapar el teléfono genera una compresión facetaria unilateral extrema y un espasmo agudo por contracción del trapecio." },
+                { q: "NIVEL III (Compensación): Sientes un corrientazo en la base del cráneo. ¿Qué micro-pausa de estiramiento es la indicada?", opciones: [{t: "Llevar el mentón hacia el pecho suavemente, asistido por tus manos, por 15 segundos.", c: true}, {t: "Realizar giros balísticos y rápidos de la cabeza en círculos completos.", c: false}, {t: "Mover los hombros de arriba a abajo aceleradamente.", c: false}], exp: "El estiramiento debe ser controlado, sostenido y suave. Movimientos bruscos desgastan los discos cervicales superiores." },
+                { q: "NIVEL IV (Psicosomático): El exceso de tareas urgentes suele concentrarse como dolor en el cuello. ¿Por qué el estrés impacta esta zona?", opciones: [{t: "El sistema nervioso activa un mecanismo reflejo inconsciente que eleva los hombros y tensa la nuca.", c: true}, {t: "Debido a que el estrés descalcifica las vértebras cervicales inmediatamente.", c: false}, {t: "Porque el estrés debilita los tendones de la espalda alta.", c: false}], exp: "La tensión psicológica incrementa el tono muscular general, afectando principalmente al trapecio y esplenios por hiper-reactividad nerviosa." }
+            ],
+            "hombros": [
+                { q: "NIVEL I (Entorno): Experimentas pesadez en los hombros tras teclear varias horas. ¿Qué factor físico lo ocasiona?", opciones: [{t: "Falta de apoyo firme de los antebrazos en la superficie, obligando al trapecio a contraerse estánticamente.", c: true}, {t: "Tener el teclado ubicado excesivamente lejos de tu cuerpo.", c: false}, {t: "Trabajar con una silla que posee apoyabrazos fijos y rígidos.", c: false}], exp: "Si los antebrazos flotan o se mantienen rígidos sin descanso, los músculos del hombro deben activarse continuamente para sostener la carga de la extremidad." },
+                { q: "NIVEL II (Hábitos): Para jalar una carpeta pesada desde el fondo del archivador, ¿cuál es la técnica ergonómica correcta?", opciones: [{t: "Mantener los codos flexionados cerca del torso e inclinarse hacia atrás suavemente.", c: true}, {t: "Estirar los brazos por completo e inclinar el cuerpo hacia atrás bruscamente.", c: false}, {t: "Sostener el objeto utilizando únicamente la fuerza de los dedos de una mano.", c: false}], exp: "Al jalar o empujar con los codos pegados al cuerpo, maximizas la ventaja mecánica y permites que los músculos grandes del tronco absorban el esfuerzo en lugar de saturar el hombro." },
+                { q: "NIVEL III (Compensación): Sientes un tirón agudo en el músculo deltoides tras manipular archivos altos. ¿Qué ejercicio reduce este estrés muscular?", opciones: [{t: "Cruzar un brazo por delante del pecho de forma horizontal y presionarlo con la otra mano por 15 segundos.", c: true}, {t: "Empujar una pared con ambos brazos estirados con fuerza máxima.", c: false}, {t: "Hacer flexiones de pecho apoyado directamente en la mesa de trabajo.", c: false}], exp: "Este estiramiento elonga la cápsula posterior del hombro y los músculos rotadores externos, aliviando la fatiga por sobreesfuerzo repetitivo." },
+                { q: "NIVEL IV (Organización): El diagnóstico de 'manguito rotador' es común en oficina. ¿Cuál es su detonante organizativo?", opciones: [{t: "La elevación repetitiva de los brazos sobre el nivel de los hombros con manipulación de cargas.", c: true}, {t: "Escribir anotaciones clínicas en las bitácoras en una mesa estándar.", c: false}, {t: "Reposar los brazos sobre el regazo durante los periodos de descanso.", c: false}], exp: "Realizar tareas con los codos por encima de la línea media corporal o manipular pesos alejados del cuerpo pinza mecánicamente los tendones del hombro." }
+            ],
+            "espalda-baja": [
+                { q: "NIVEL I (Entorno): Experimentas un dolor sordo y constante en la parte baja de la espalda al estar sentado. ¿Qué deficiencia de tu mobiliario es responsable?", opciones: [{t: "Ausencia de un soporte o apoyo lumbar adecuado en la silla que mantenga la curvatura natural.", c: true}, {t: "Que el teclado esté ubicado exactamente a la altura de tus codos.", c: false}, {t: "Tener una base de cinco aspas con ruedas en la parte inferior del asiento.", c: false}], exp: "Sin un soporte lumbar mecánico, la pelvis rota hacia atrás, aplanando la lordosis lumbar y multiplicando la presión de carga hidrostática dentro del disco." },
+                { q: "NIVEL II (Hábitos): Te levantas de tu puesto a recoger una caja pesada de archivos del suelo. ¿Cuál es el error postural crítico?", opciones: [{t: "Doblar la columna lumbar arqueándola hacia adelante con las piernas completamente rígidas.", c: true}, {t: "Flexionar las rodillas manteniendo el objeto lo más pegado al cuerpo posible.", c: false}, {t: "Contraer los músculos abdominales para estabilizar el tronco.", c: false}], exp: "Levantar objetos del suelo doblando la espalda en arco con piernas estiradas multiplica exponencialmente la fuerza de cizallamiento en los discos L4-L5 y L5-S1." },
+                { q: "NIVEL III (Compensación): Para mitigar la fatiga acumulada tras 4 horas de labor sedente, ¿qué acción es prioritaria?", opciones: [{t: "Ponerse de pie, ubicar las manos en las caderas y realizar una extensión de tronco arqueando suavemente.", c: true}, {t: "Permanecer sentado y recostarse por completo sobre los brazos del escritorio.", c: false}, {t: "Cruzar una pierna sobre la otra de forma intermitente el resto del día.", c: false}], exp: "La extensión controlada de pie invierte la presión discal acumulada por la postura sentada, oxigenando el tejido y relajando los músculos erectores lumbares acortados." },
+                { q: "NIVEL IV (Organización): Pasas más de 6 horas continuas respondiendo correos sin levantarte. Biomecánicamente, ¿qué ocurre?", opciones: [{t: "Los discos intervertebrales pierden nutrientes por falta de bombeo hídrico dinámico, acelerando su deshidratación.", c: true}, {t: "Los músculos lumbares se vuelven más elásticos y resistentes al esfuerzo.", c: false}, {t: "La masa ósea de la pelvis se ensancha disminuyendo la presión.", c: false}], exp: "La nutrición del disco se realiza por imbibición. El sedentarismo prolongado deshidrata y envejece el tejido discal." }
+            ],
+            "manos": [
+                { q: "NIVEL I (Entorno): Sientes hormigueo y pérdida de sensibilidad en los dedos tras digitar reportes largos. ¿Qué condición física lo propicia?", opciones: [{t: "Escribir manteniendo las muñecas apoyadas sobre un borde rígido, cortante o en angulación forzada hacia arriba.", c: true}, {t: "Mantener los antebrazos alineados de forma paralela con respecto a la mesa.", c: false}, {t: "Utilizar un teclado de membrana suave a una distancia de 10 cm del borde.", c: false}], exp: "Apoyar las muñecas directamente sobre aristas duras o teclear con las manos muy extendidas comprime el túnel carpiano, atrapando mecánicamente el nervio mediano." },
+                { q: "NIVEL II (Hábitos): Al manipular el mouse durante el día, ¿cuál es el movimiento repetitivo que debes evitar para proteger tus tendones?", opciones: [{t: "Realizar desviaciones laterales continuas de la muñeca dejando la mano fija en un punto.", c: true}, {t: "Mover el mouse desplazando todo el antebrazo de forma coordinada.", c: false}, {t: "Hacer clics suaves manteniendo los dedos relajados sobre los botones.", c: false}], exp: "Los movimientos de pivote o desviación cubital/radial repetitiva con la muñeca fija tensionan en exceso los tendones flexores y sus vainas sinoviales." },
+                { q: "NIVEL III (Compensación): ¿Cuál es el ejercicio idóneo para estirar y liberar la tensión acumulada en los tendones flexores de tus dedos?", opciones: [{t: "Extender el brazo hacia adelante, palma al frente con dedos arriba y tirar hacia atrás con la otra mano.", c: true}, {t: "Empuñar la mano con la máxima fuerza posible durante varios minutos.", c: false}, {t: "Sacudir las manos de forma desordenada en el aire a gran velocidad.", c: false}], exp: "La extensión pasiva estira toda la musculatura flexora del antebrazo, contrarrestando la tensión isométrica del tecleo diario." },
+                { q: "NIVEL IV (Concientización): Si ignoras el hormigueo recurrente por más de un año y continúas con malos hábitos, ¿qué patología podrías consolidar?", opciones: [{t: "Síndrome del Túnel Carpiano crónico que puede requerir liberación por intervención quirúrgica.", c: true}, {t: "Epicondilitis medial aguda con desgarro muscular.", c: false}, {t: "Artritis reumatoide de origen infeccioso ocupacional.", c: false}], exp: "La compresión sostenida y prolongada del nervio mediano termina en fibrosis del ligamento carpiano, pérdida de fuerza de agarre y daño neurológico reversible solo con cirugía." }
+            ],
+            "pies": [
+                { q: "NIVEL I (Entorno): Sientes incomodidad en la planta del pie al final de la jornada administrativa. ¿Qué factor del mobiliario lo detonó?", opciones: [{t: "Tener los pies suspendidos en el aire sin tocar el suelo o no contar con un elemento de apoyo angulado.", c: true}, {t: "Apoyar la planta del pie de forma plana y uniforme.", c: false}, {t: "Caminar por la oficina distancias moderadas intermitentemente.", c: false}], exp: "Pies colgando trasladan la carga a la zona lumbar y muslos, cansándote rápido. ¡Usa reposapiés!" },
+                { q: "NIVEL II (Hábitos): Al estar de pie conversando o archivando, ¿cuál es el mal hábito podal que sobrecarga la columna lumbar?", opciones: [{t: "Bloquear las rodillas manteniéndolas hiperextendidas y rígidas.", c: true}, {t: "Adoptar una postura de apoyo alterno en un pequeño escalón.", c: false}, {t: "Cruzar una pierna por detrás de la otra.", c: false}], exp: "Rodillas bloqueadas inactivan los músculos estabilizadores de la pelvis, transfiriendo todo el peso a los discos intervertebrales." },
+                { q: "NIVEL III (Compensación): Para relajar la estructura de la planta del pie tras un turno extenso, ¿qué ejercicio autónomo puedes hacer?", opciones: [{t: "Hacer rodar la planta del pie presionando suavemente sobre una pelota pequeña de caucho.", c: true}, {t: "Permanecer sentado estirando los dedos de los pies hacia abajo.", c: false}, {t: "Hacer movimientos circulares rápidos con el tobillo.", c: false}], exp: "El masaje ejerce liberación miofascial en la planta del pie, flexibilizando la fascia y reduciendo inflamación." },
+                { q: "NIVEL IV (Concientización): El sedentarismo de oficina combinado con calzado inapropiado puede derivar en 'fascitis plantar'. ¿Cuál es el mecanismo?", opciones: [{t: "El sobreestiramiento crónico y microtraumatismo de la fascia por calzado plano.", c: true}, {t: "La atrofia muscular en los gemelos por falta de uso.", c: false}, {t: "Pérdida de densidad mineral ósea en los dedos.", c: false}], exp: "La fascia plantar une talón y dedos. Caminar kilómetros sobre superficies duras con zapatos planos estira dolorosamente esta estructura." }
+            ]
+        },
+        Asistencial: {
+            "nuca-cuello": [
+                { q: "NIVEL I (Entorno): Notas tensión severa en la nuca al realizar procedimientos minuciosos como canalización o suturas. ¿Por qué ocurre?", opciones: [{t: "Mantener la cabeza inclinada de forma prolongada sin ajustar previamente la altura de la camilla.", c: true}, {t: "Realizar el procedimiento manteniendo los hombros alineados.", c: false}, {t: "Trabajar bajo una iluminación deficiente en el servicio clínico.", c: false}], exp: "Trabajar agachado sobre camillas bajas fatiga en exceso los músculos cervicales posteriores. ¡Ajusta la altura del plano antes de iniciar!" },
+                { q: "NIVEL II (Hábitos): Al trasladar pacientes en camilla por pasillos, ¿qué conducta biomecánica lesiona tu columna cervical?", opciones: [{t: "Jalar la camilla caminando de espaldas con el cuello girado forzadamente para ver.", c: true}, {t: "Solicitar el apoyo de un compañero para el traslado.", c: false}, {t: "Mantener los brazos alineados y firmes ejerciendo empuje con las piernas.", c: false}], exp: "Caminar de espaldas y girar forzadamente el cuello con carga estática comprime las facetas cervicales de forma nociva." },
+                { q: "NIVEL III (Compensación): Sientes un espasmo cervical tras asistir en el movimiento de un paciente. ¿Qué maniobra de alivio inmediato puedes hacer?", opciones: [{t: "Sentarse, separar las rodillas y descolgar el tronco suavemente hasta tocar el suelo.", c: true}, {t: "Solicitar a un compañero que presione rígidamente el punto del dolor.", c: false}, {t: "Permanecer de pie completamente erguido cargando carpetas.", c: false}], exp: "La flexión anterior pasiva estando sentado estira los músculos lumbares y dorsales tensos, abriendo el espacio intervertebral y aliviando presión." },
+                { q: "NIVEL IV (Psicosomático): La tensión psicológica por alta demanda de pacientes se manifiesta como dolor cervical. ¿Qué factor asistencial influye?", opciones: [{t: "La sobrecarga cognitiva y estrés por toma de decisiones críticas que tensionan inconscientemente la nuca.", c: true}, {t: "Debido a que el estrés descalcifica las vértebras cervicales inmediatamente.", c: false}, {t: "Porque el estrés debilita los tendones de la espalda alta.", c: false}], exp: "La tensión psicológica incrementa el tono muscular general, afectando principalmente al trapecio y los esplenios por hiper-reactividad nerviosa." }
+            ],
+            "hombros": [
+                { q: "NIVEL I (Entorno): Sientes opresión en los hombros al movilizar o trasladar pacientes de camas. ¿Qué error de técnica muscular cometiste?", opciones: [{t: "Alejar los brazos excesivamente de tu eje central corporal al jalar o empujar, sobrecargando el manguito.", c: true}, {t: "Solicitar el apoyo de un compañero y pegar los codos al torso.", c: false}, {t: "Realizar el traslado manteniendo los hombros alineados.", c: false}], exp: "A mayor distancia de la carga, se triplica el brazo de palanca biomecánico en el manguito rotador del hombro." },
+                { q: "NIVEL II (Hábitos): Para jalar una camilla pesada o trasladar un equipo clínico hacia ti, ¿cuál es la mejor técnica ergonómica?", opciones: [{t: "Mantener los codos flexionados cerca del torso y usar el peso de tu propio cuerpo en retroceso.", c: true}, {t: "Estirar los brazos por completo e inclinar el cuerpo hacia atrás bruscamente.", c: false}, {t: "Sostener el equipo clínico utilizando únicamente la fuerza de los dedos de una mano.", c: false}], exp: "Al jalar o empujar con los codos pegados al cuerpo, maximizas la ventaja mecánica y permites que los músculos grandes del tronco absorban el esfuerzo en lugar de saturar el hombro." },
+                { q: "NIVEL III (Compensación): Notas tensión alta en el músculo trapecio superior y el deltoides tras un turno de urgencias de 12 horas. ¿Qué ejercicio reduce este estrés muscular?", opciones: [{t: "Cruzar un brazo por delante del pecho de forma horizontal y presionarlo con la otra mano por 15 segundos.", c: true}, {t: "Empujar una pared con ambos brazos estirados con fuerza máxima.", c: false}, {t: "Hacer flexiones de pecho apoyado directamente en la mesa de trabajo.", c: false}], exp: "Este estiramiento elonga la cápsula posterior del hombro y los músculos rotadores externos, aliviando la fatiga por sobreesfuerzo repetitivo." },
+                { q: "NIVEL IV (Concientización): El diagnóstico de 'Tendinitis del Manguito Rotador' es común en salud asistencial. ¿Cuál es su principal detonante?", opciones: [{t: "La elevación repetitiva de los brazos por encima del nivel de los hombros con manipulación de pesos o fuerzas.", c: true}, {t: "Escribir anotaciones clínicas en las bitácoras en una mesa de altura estándar.", c: false}, {t: "Reposar los brazos sobre el regazo durante los periodos breves de descanso.", c: false}], exp: "Trabajar con los brazos elevados por encima de los 90 grados pinza de forma repetitiva el tendón del supraespinoso contra el acromion, inflamando el tejido." }
+            ],
+            "espalda-baja": [
+                { q: "NIVEL I (Entorno): Debes asistir a un paciente encamado. La camilla se encuentra baja a la altura de tus muslos. ¿Qué acción ergonómica debes tomar?", opciones: [{t: "Ajustar mecánicamente la altura de la camilla clínica hasta que quede al nivel de tu pelvis.", c: true}, {t: "Proceder de inmediato doblando el tronco hacia adelante.", c: false}, {t: "Pedir al paciente que intente incorporarse por sus propios medios.", c: false}], exp: "Trabajar sobre camillas bajas obliga a mantener una flexión estática de columna, sobrecargando la zona lumbar. ¡Ajusta el plano!" },
+                { q: "NIVEL II (Hábitos): Te corresponde realizar la transferencia de un paciente desde camilla a silla de ruedas. ¿Cuál es la regla biomecánica de piernas?", opciones: [{t: "Separar los pies, flexionar las rodillas y usar la fuerza de empuje de tus muslos.", c: true}, {t: "Mantener los pies juntos y las rodillas bloqueadas.", c: false}, {t: "Girar el tronco rápidamente mientras sostienes el peso del paciente.", c: false}], exp: "El uso de la fuerza de cuádriceps y glúteos al flexionar las rodillas distribuye el peso de la carga, protegiendo los discos." },
+                { q: "NIVEL III (Compensación): Sientes lumbalgia tras movilizar equipos clínicos. ¿Qué maniobra de alivio inmediato puedes hacer?", opciones: [{t: "Sentarse, separar las rodillas y descolgar el tronco hacia adelante hasta tocar el suelo.", c: true}, {t: "Solicitar a un compañero que presione rígidamente el punto exacto del dolor.", c: false}, {t: "Permanecer de pie completamente erguido.", c: false}], exp: "La flexión anterior pasiva estando sentado estira los músculos lumbares tensos, abre el espacio intervertebral y alivia presión." },
+                { q: "NIVEL IV (Organización): El trabajo asistencial en turnos de 12 horas genera fatiga en la musculatura abdominal y lumbar. ¿Qué factor de riesgo lo incrementa?", opciones: [{t: "No alternar el apoyo del peso corporal entre ambos pies o carecer de un calzado que amortigüe el impacto.", c: true}, {t: "Mantener activos los músculos abdominales de manera intermitente al caminar.", c: false}, {t: "Utilizar las escaleras del hospital de forma controlada.", c: false}], exp: "Permanecer estático de pie sobre superficies rígidas fatiga los músculos estabilizadores por contracción continua. Se requiere alternancia y calzado ergonómico." }
+            ],
+            "manos": [
+                { q: "NIVEL I (Entorno): Dolores agudos en dedos tras manipular de forma repetitiva jeringas o válvulas clínicas de alta resistencia. ¿Qué lo ocasiona?", opciones: [{t: "Pinza digital repetitiva y sostenida con alta fuerza mecánica sin periodos cortos de relajación.", c: true}, {t: "Manipular los elementos manteniendo la muñeca alineada y estable.", c: false}, {t: "Utilizar guantes clínicos que poseen una talla inferior a la requerida.", c: false}], exp: "Ejercer fuerza continuada con la punta de los dedos genera fatiga tendinosa y estrés articular nocivo en falanges." },
+                { q: "NIVEL II (Hábitos): Al realizar la digitación de historias clínicas en el servicio, ¿cuál es la conducta lesiva para tu muñeca?", opciones: [{t: "Escribir manteniendo las muñecas apoyadas sobre un borde rígido, cortante o en angulación forzada hacia arriba.", c: true}, {t: "Mantener los antebrazos alineados de forma paralela con respecto a la mesa.", c: false}, {t: "Utilizar un teclado de membrana suave a una distancia de 10 cm del borde.", c: false}], exp: "Apoyar las muñecas directamente sobre aristas duras o teclear con las manos muy extendidas comprime el túnel carpiano, atrapando mecánicamente el nervio mediano." },
+                { q: "NIVEL III (Compensación): ¿Cuál es el ejercicio idóneo para estirar y liberar la tensión acumulada en los tendones flexores de tus dedos?", opciones: [{t: "Extender el brazo hacia adelante, palma al frente con dedos arriba y tirar hacia atrás con la otra mano.", c: true}, {t: "Empuñar la mano con la máxima fuerza posible durante varios minutos.", c: false}, {t: "Sacudir las manos de forma desordenada en el aire a gran velocidad.", c: false}], exp: "La extensión pasiva estira toda la musculatura flexora del antebrazo, contrarrestando la tensión isométrica." },
+                { q: "NIVEL IV (Concientización): Ignorar el hormigueo recurrente por más de un año y continuar con malos hábitos, ¿qué patología podría consolidar?", opciones: [{t: "Síndrome del Túnel Carpiano crónico que puede requerir liberación por intervención quirúrgica.", c: true}, {t: "Epicondilitis medial aguda con desgarro muscular.", c: false}, {t: "Artritis reumatoide de origen infeccioso ocupacional.", c: false}], exp: "La compresión sostenida y prolongada del nervio mediano termina en fibrosis del ligamento carpiano, pérdida de fuerza de agarre y daño neurológico." }
+            ],
+            "pies": [
+                { q: "NIVEL I (Entorno): Sientes incomodidad en la planta del pie al final de la jornada administrativa. ¿Qué factor del mobiliario lo detonó?", opciones: [{t: "Tener los pies suspendidos en el aire sin tocar el suelo o no contar con un elemento de apoyo angulado.", c: true}, {t: "Apoyar la planta del pie de forma plana y uniforme.", c: false}, {t: "Caminar por la oficina distancias moderadas intermitentemente.", c: false}], exp: "Pies colgando trasladan la carga a la zona lumbar y muslos, cansándote rápido. ¡Usa reposapiés!" },
+                { q: "NIVEL II (Hábitos): Al estar de pie asistiendo en un procedimiento quirúrgico o de curación por más de dos horas, ¿cuál es la estrategia para mitigar fatiga podal?", opciones: [{t: "Adoptar una postura de apoyo alterno, usando un pequeño escalón o reposapiés para elevar un pie.", c: true}, {t: "Mantenerse inmóvil en posición de firmes con el peso distribuido en la punta de los pies.", c: false}, {t: "Cruzar los tobillos transfiriendo la carga a los bordes externos de los zapatos.", c: false}], exp: "La alternancia de apoyo relaja la musculatura de la pantorrilla, disminuye la lordosis lumbar y favorece el descanso del pie." },
+                { q: "NIVEL III (Compensación): Para relajar la estructura de la planta del pie tras un turno extenso en urgencias, ¿qué ejercicio autónomo puedes hacer?", opciones: [{t: "Hacer rodar la planta del pie presionando suavemente sobre una botella con agua fría.", c: true}, {t: "Permanecer sentado estirando los dedos de los pies hacia abajo.", c: false}, {t: "Sacudir las manos de forma desordenada en el aire a gran velocidad.", c: false}], exp: "El masaje ejerce liberación miofascial en la planta del pie, flexibilizando la fascia y reduciendo inflamación." },
+                { q: "NIVEL IV (Concientización): Además del dolor muscular local, ¿qué afectación vascular periférica se agrava por el exceso de bipedestación estática sin pausas?", opciones: [{t: "Insuficiencia venosa (Várices), debido a la dificultad del retorno sanguíneo por gravedad hacia el corazón.", c: true}, {t: "Atrofia muscular en los gemelos de las piernas.", c: false}, {t: "Pérdida de densidad mineral ósea en las articulaciones de los dedos.", c: false}], exp: "Estar de pie sin caminar anula el efecto de bomba muscular que realizan las pantorrillas para impulsar la sangre, favoreciendo la aparición de várices." }
+            ]
+        }
+    };
+
+    // Respuestas fallback por si el usuario da clic a una zona sin trivias específicas cargadas
+    const triviaComunFallback = [
+        { q: "Pregunta del Sistema: ¿Cada cuánto tiempo máximo se recomienda realizar una pausa activa con movilidad articular?", opciones: [{t: "Cada 90 a 120 minutos de labor continua.", c: true}, {t: "Únicamente al finalizar la jornada laboral diaria.", c: false}, {t: "Cada 5 horas sin importar la intensidad.", c: false}], exp: "Los cortes de actividad previenen la fatiga muscular acumulada." },
+        { q: "Pregunta del Sistema: ¿Cuál es el objetivo principal de la ergonomía participativa en la empresa?", opciones: [{t: "Adaptar las condiciones del puesto de trabajo a las características del trabajador.", c: true}, {t: "Incrementar la velocidad del operario sin importar su comodidad.", c: false}], exp: "Busca un equilibrio óptimo entre productividad y bienestar físico." },
+        { q: "Pregunta del Sistema: Al sentir dolor físico recurrente en tu labor, ¿cuál es el protocolo correcto?", opciones: [{t: "Reportar formalmente al área de SST / UHO para evaluar el puesto.", c: true}, {t: "Automedicarse analgésicos diariamente en silencio.", c: false}], exp: "La detección temprana frena el avance de las lesiones músculo-esqueléticas crónicas." },
+        { q: "Pregunta del Sistema: ¿Qué tipo de ejercicio físico complementario previene lesiones laborales?", opciones: [{t: "El fortalecimiento muscular general del Core y estiramientos flexibles.", c: true}, {t: "Permanecer en reposo absoluto durante los fines de semana.", c: false}], exp: "Un cuerpo fuerte resiste mejor las cargas estáticas de la jornada." }
+    ];
+
+    const catalogoPrescripciones = {
+        "nuca-cuello": "🎯 <strong>Nuca/Cuello:</strong> Regular la pantalla a la altura visual horizontal. Emplear audífonos integrados en llamadas prolongadas. Evitar giros forzados de la columna cervical.",
+        "hombros": "🎯 <strong>Hombros:</strong> Ejecutar empujes o tracciones de cargas manteniendo los codos fijos pegados al cuerpo. Evitar manipular objetos sobre el nivel del pecho.",
+        "espalda-baja": "🎯 <strong>Espalda Baja:</strong> Activar el soporte lumbar neumático. Levantar cargas flexionando rodillas, manteniendo el ombligo hacia adentro (Core activo).",
+        "manos": "🎯 <strong>Muñecas y Manos:</strong> Evitar desviaciones laterales o flexiones excesivas al digitar. Realizar estiramientos palmares al final de la jornada.",
+        "pies": "🎯 <strong>Soporte de Pies:</strong> Usar calzado técnico con suela elástica y drop de amortiguación. Alternar pesos corporales con apoyo en bancos de descarga.",
+        "espalda-alta": "🎯 <strong>Espalda Alta:</strong> Utilizar el respaldo completo del asiento de oficina. Realizar pausas abriendo los brazos hacia atrás para relajar escápulas.",
+        "espalda-completa": "🎯 <strong>Espalda General:</strong> Alternar bipedestación y sedestación. No permanecer más de 120 minutos en la misma postura física estática.",
+        "ojos": "🎯 <strong>Higiene Visual:</strong> Regla 20-20-20. Mira a lo lejos cada veinte minutos por veinte segundos. Lubricación ocular periódica.",
+        "codos": "🎯 <strong>Codos:</strong> Evitar apoyar las articulaciones directamente sobre aristas duras o filos de escritorios de trabajo.",
+        "muslos": "🎯 <strong>Muslos:</strong> Asegúrate de que el asiento no presione de forma rígida la zona poplítea (detrás de la rodilla).",
+        "rodillas": "🎯 <strong>Rodillas:</strong> Si vas a revisar niveles bajos o drenajes en área asistencial, emplea una banqueta rodante.",
+        "cadera": "🎯 <strong>Cadera:</strong> Gira levantando tus pies, nunca tuermas la pelvis manteniendo los pies pegados rígidamente al suelo al realizar transferencias de cargas.",
+        "default": "🎯 <strong>Recomendación General:</strong> Ejecutar pausas activas metodológicas cada 90 minutos y reportar alertas al área de SST / UHO."
+    };
+
+    const semaforosGameplay = {
+        verde: { card: "#052e16", texto: "🟢 ¡FASE INICIAL DE REACCIÓN FISIOLÓGICA! (Riesgo Leve). Corregible de inmediato implementando pautas mecánicas y corrección del entorno hoy." },
+        amarillo: { card: "#451a03", texto: "🟡 ¡SÍNDROME DE ACUMULACIÓN HISTOLÓGICA! (Riesgo Moderado). Tus tejidos registran inflamación localizada persistente." },
+        rojo: { card: "#4c0519", texto: "🔴 ¡ESTADO CRÓNICO DE SENSITIVIDAD BIOMECÁNICA! (Riesgo Crítico). Desgaste estructural latente. Requiere evaluación prioritaria de puesto." }
+    };
+
+    let pName = "", pProfile = "", pGender = "";
+    let scoreXP = 0, lives = 3, zonesCleared = 0;
+    let selectedZoneId = "", selectedZoneLabel = "";
+    let currentFrecuencia = "", currentComportamiento = "";
+    let logsEvaluados = [];
+
+    let currentTriviaIndex = 0;
+    let currentZoneQuestions = [];
+    let currentStreak = 0;
+
+    // DEFINICIONES DE LUZ NEÓN PREMIUM (Inspirado en image_0.png)
+    const neonDefs = `<defs>
+        <filter id="neon-glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur" />
+            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+        </filter>
+        <linearGradient id="neonGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#00ffff" stop-opacity="1" />
+            <stop offset="100%" stop-color="#0080ff" stop-opacity="1" />
+        </linearGradient>
+    </defs>`;
+
+    // SILUETA ESTILIZADA INMERSIVA CON EFECTO DE ESCANER NEÓN
+    const cuerpoEstilizadoScanner = `
+    <svg class="interactive-silhouette" viewBox="0 0 100 240" style="filter: drop-shadow(0px 0px 8px rgba(0, 242, 254, 0.5));">
+        ${neonDefs}
+        
+        <!-- Rectángulo de Marco de Escaner -->
+        <rect x="5" y="5" width="90" height="230" rx="10" stroke="#112244" stroke-width="1" fill="#060a12" stroke-dasharray="8,8"/>
+
+        <!-- Línea Horizontal de Escaneo Parpadeante -->
+        <line x1="10" y1="120" x2="90" y2="120" stroke="var(--neon-blue)" stroke-width="0.5" opacity="0.3">
+            <animate attributeName="y1" from="10" to="230" dur="8s" repeatCount="indefinite" />
+            <animate attributeName="y2" from="10" to="230" dur="8s" repeatCount="indefinite" />
+        </line>
+
+        <!-- Silueta Base Sombreada Profunda -->
+        <path d="M37 20 C37 10, 63 10, 63 20 C63 27, 57 29, 54 32 L54 38 C64 41, 71 46, 73 58 L76 100 C77 104, 72 106, 71 102 L67 71 C65 83, 62 100, 60 137 L58 230 L50 230 L50 175 L50 230 L42 230 L40 137 C38 100, 35 83, 33 71 L29 102 C28 106, 23 104, 24 100 L27 58 C29 46, 36 41, 46 38 L46 32 C43 29, 37 27, 37 20 Z" fill="#0b111e" stroke="#112244" stroke-width="0.8"/>
+
+        <!-- Puntos interactivos detallados con efecto neón de image_0.png -->
+        <circle id="g-ojos" class="body-zone" cx="50" cy="15" r="4" data-label="ojos"/>
+        <circle id="g-nuca-cuello" class="body-zone" cx="50" cy="32" r="6" data-label="nuca-cuello"/>
+        <path id="g-hombros" class="body-zone" d="M28 48 C35 42, 65 42, 72 48 L70 56 L30 56 Z" data-label="hombros"/>
+        <rect id="g-espalda-alta" class="body-zone" x="34" y="58" width="32" height="20" rx="2" data-label="espalda-alta"/>
+        <rect id="g-espalda-completa" class="body-zone" x="34" y="80" width="32" height="15" rx="1" data-label="espalda-completa"/>
+        <rect id="g-espalda-baja" class="body-zone" x="35" y="97" width="30" height="20" rx="2" data-label="espalda-baja"/>
+        
+        <circle id="g-codos-izq" class="body-zone" cx="28" cy="80" r="4.5" data-label="codos"/>
+        <circle id="g-codos-der" class="body-zone" cx="72" cy="80" r="4.5" data-label="codos"/>
+        <circle id="g-manos-izq" class="body-zone" cx="24" cy="105" r="4.5" data-label="manos"/>
+        <circle id="g-manos-der" class="body-zone" cx="76" cy="105" r="4.5" data-label="manos"/>
+        
+        <path id="g-cadera" class="body-zone" d="M36 120 h28 v15 h-28 Z" data-label="cadera"/>
+        <path id="g-muslos" class="body-zone" d="M37 138 h11 v30 h-11 Z M52 138 h11 v30 h-11 Z" data-label="muslos"/>
+        
+        <circle id="g-rodillas-1" class="body-zone" cx="42" cy="176" r="5" data-label="rodillas"/>
+        <circle id="g-rodillas-2" class="body-zone" cx="58" cy="176" r="5" data-label="rodillas"/>
+        
+        <path id="g-pies" class="body-zone" d="M40 222 h6 v10 h-6 Z M54 222 h6 v10 h-6 Z" data-label="pies"/>
+        
+        <!-- Superposición de silueta geométrica parpadeante de image_0.png -->
+        <path d="M37 20 C37 10, 63 10, 63 20 C63 27, 57 29, 54 32 L54 38 C64 41, 71 46, 73 58 L76 100 C77 104, 72 106, 71 102 L67 71 C65 83, 62 100, 60 137 L58 230 L50 230 L50 175 L50 230 L42 230 L40 137 C38 100, 35 83, 33 71 L29 102 C28 106, 23 104, 24 100 L27 58 C29 46, 36 41, 46 38 L46 32 C43 29, 37 27, 37 20 Z" fill="none" stroke="var(--neon-blue)" stroke-width="0.3" filter="url(#neon-glow)" stroke-opacity="0.2">
+            <animate attributeName="stroke-opacity" from="0.1" to="0.4" dur="2s" repeatCount="indefinite" alternate="true"/>
+        </path>
+    </svg>`;
+
+    function iniciarAventura() {
+        let nameInput = document.getElementById('player-name').value;
+        if (!nameInput.trim()) { alert("¡Digita tu identidad para iniciar la misión de Vigilancia!"); return; }
+
+        pName = nameInput.trim();
+        pProfile = document.getElementById('player-profile').value;
+        pGender = document.getElementById('player-gender').value;
+
+        document.getElementById('hud-name').innerText = `OPERADOR: ${pName}`;
+        document.getElementById('hud-class').innerText = `clase: ${pProfile.toUpperCase()}`;
+        document.getElementById('map-root').innerHTML = cuerpoEstilizadoScanner;
+
+        configurarMapaZonas();
+
+        document.getElementById('screen-intro').style.display = 'none';
+        document.getElementById('screen-game').classList.remove('hidden-section');
+    }
+
+    function configurarMapaZonas() {
+        document.querySelectorAll('.body-zone').forEach(item => {
+            item.onclick = function() {
+                // Limpiar resaltado previo no consolidado
+                document.querySelectorAll('.body-zone').forEach(z => {
+                    if(!z.classList.contains('zone-safe') && !z.classList.contains('zone-warning') && !z.classList.contains('zone-danger')) {
+                        z.style.fill = "";
+                        z.style.filter = "";
+                    }
+                });
+
+                selectedZoneId = this.id;
+                selectedZoneLabel = this.getAttribute('data-label');
+                
+                // Aplicar luz neón brillante al nodo seleccionado (image_0.png)
+                this.style.fill = "var(--neon-blue)";
+                this.style.filter = "url(#neon-glow)";
+
+                currentFrecuencia = ""; currentComportamiento = "";
+                document.querySelectorAll('#quest-phase-frequency .game-btn').forEach(b => {
+                    b.style.background = ""; b.style.borderColor = "";
+                });
+
+                document.getElementById('quest-phase-frequency').classList.remove('hidden-section');
+                document.getElementById('quest-phase-timeline').classList.add('hidden-section');
+                document.getElementById('quest-phase-report').classList.add('hidden-section');
+                document.getElementById('quest-phase-trivia').classList.add('hidden-section');
+                document.getElementById('btn-next-step').classList.add('hidden-section');
+            };
+        });
+    }
+
+    function setFrecuencia(tipo, btn) {
+        currentFrecuencia = tipo;
+        document.getElementById('f-horas').style.background = ""; document.getElementById('f-dias').style.background = "";
+        btn.style.background = "#1e3a8a"; btn.style.borderColor = "var(--neon-blue)";
+    }
+
+    function setComportamiento(tipo, btn) {
+        currentComportamiento = tipo;
+        document.getElementById('c-mejora').style.background = ""; document.getElementById('c-frecuente').style.background = "";
+        btn.style.background = "#1e3a8a"; btn.style.borderColor = "var(--neon-blue)";
+    }
+
+    function bloquearFrecuencia() {
+        if (!currentFrecuencia || !currentComportamiento) {
+            alert("Responde los campos de frecuencia y comportamiento para continuar."); return;
+        }
+        document.getElementById('quest-phase-timeline').classList.remove('hidden-section');
+    }
+
+    function calcularImpactoSemaforo(colorBase) {
+        let realColor = colorBase;
+        if(currentFrecuencia === "todos-los-dias" && currentComportamiento === "frecuente") {
+            if(colorBase === "verde") realColor = "amarillo";
+            else if(colorBase === "amarillo") realColor = "rojo";
+        }
+
+        let mapNode = document.getElementById(selectedZoneId);
+        mapNode.style.fill = "";
+        mapNode.className.baseVal = `body-zone zone-${realColor === 'verde' ? 'safe' : realColor === 'amarillo' ? 'warning' : 'danger'}`;
+
+        let config = semaforosGameplay[realColor];
+        let repBox = document.getElementById('quest-phase-report');
+        repBox.style.background = config.card;
+        repBox.style.borderLeftColor = realColor === 'verde' ? 'var(--game-success)' : realColor === 'amarillo' ? 'var(--game-warning)' : 'var(--game-error)';
+        
+        document.getElementById('report-title').innerText = `📋 Matriz Biomecánica: Segmento ${selectedZoneLabel.toUpperCase()}`;
+        document.getElementById('report-body').innerHTML = `${config.texto}<br><span style='color:#94a3b8; font-size:0.8rem;'>Diagnóstico: Exposición continua combinada con factor de reposo restrictivo.</span>`;
+        repBox.classList.remove('hidden-section');
+
+        logsEvaluados.push({ zona: selectedZoneLabel, nivel: realColor });
+
+        prepararCampanaTrivias();
+    }
+
+    function prepararCampanaTrivias() {
+        let profilePack = bancoPreguntasGamer[pProfile];
+        if (profilePack && profilePack[selectedZoneLabel]) {
+            currentZoneQuestions = profilePack[selectedZoneLabel];
+        } else {
+            currentZoneQuestions = triviaComunFallback;
+        }
+        
+        currentTriviaIndex = 0;
+        desplegarPreguntaTriviaActual();
+    }
+
+    function desplegarPreguntaTriviaActual() {
+        let itemTrivia = currentZoneQuestions[currentTriviaIndex];
+        
+        document.getElementById('trivia-step-title').innerText = `💡 Desafío Ergo: Nivel ${currentTriviaIndex + 1}/4`;
+        let pct = ((currentTriviaIndex) / 4) * 100;
+        document.getElementById('trivia-progress-fill').style.width = `${pct}%`;
+
+        let basePoints = 100;
+        if (currentStreak > 1) {
+            basePoints = 100 * currentStreak;
+            document.getElementById('trivia-points-indicator').innerText = `🔥 COMBO X${currentStreak} (+${basePoints} XP)`;
+        } else {
+            document.getElementById('trivia-points-indicator').innerText = `+100 XP`;
+        }
+
+        document.getElementById('trivia-question-text').innerText = itemTrivia.q;
+        
+        let container = document.getElementById('trivia-options-zone');
+        container.innerHTML = "";
+        document.getElementById('trivia-explanation').classList.add('hidden-section');
+        document.getElementById('btn-next-step').classList.add('hidden-section');
+
+        itemTrivia.opciones.forEach(op => {
+            let btn = document.createElement('button');
+            btn.className = "game-btn";
+            btn.innerText = op.t;
+            btn.onclick = function() { validarRespuestaCampana(this, op.c, itemTrivia.opciones, itemTrivia.exp, basePoints); };
+            container.appendChild(btn);
+        });
+
+        document.getElementById('quest-phase-trivia').classList.remove('hidden-section');
+    }
+
+    function validarRespuestaCampana(btnTarget, esCorrecto, todasLasOpciones, explicacion, puntosGanados) {
+        let botones = document.querySelectorAll('#trivia-options-zone .game-btn');
+        botones.forEach(b => b.disabled = true);
+
+        let comboBadge = document.getElementById('hud-combo');
+
+        if (esCorrecto) {
+            btnTarget.classList.add('btn-correct');
+            scoreXP += puntosGanados;
+            currentStreak++;
+            
+            document.getElementById('hud-xp').innerText = scoreXP;
+            if(currentStreak > 1) {
+                document.getElementById('combo-value').innerText = currentStreak;
+                comboBadge.style.display = "flex";
+            }
+        } else {
+            btnTarget.classList.add('btn-wrong');
+            lives--;
+            currentStreak = 0; 
+            comboBadge.style.display = "none";
+            document.getElementById('hud-lives').innerText = lives;
+            
+            botones.forEach((b, i) => { if(todasLasOpciones[i].c) b.classList.add('btn-correct'); });
+        }
+
+        let eBox = document.getElementById('trivia-explanation');
+        eBox.innerHTML = `<strong>💡 Sustentación Metodológica:</strong> ${explicacion}`;
+        eBox.classList.remove('hidden-section');
+
+        let nextBtn = document.getElementById('btn-next-step');
+        if (lives <= 0) {
+            nextBtn.innerText = "🏁 Ver Reporte de Misión Final";
+        } else if (currentTriviaIndex < 3) {
+            nextBtn.innerText = `Avanzar al Nivel ${currentTriviaIndex + 2} ➔`;
+        } else {
+            nextBtn.innerText = "Finalizar Misión de Zona ➔";
+        }
+        nextBtn.classList.remove('hidden-section');
+    }
+
+    function controlarFlujoCampana() {
+        if (lives <= 0) {
+            finalizarPartida();
+            return;
+        }
+
+        if (currentTriviaIndex < 3) {
+            currentTriviaIndex++;
+            desplegarPreguntaTriviaActual();
+        } else {
+            zonesCleared++;
+            document.getElementById('hud-progress').innerText = `${zonesCleared}/3 Zonas`;
+            
+            if (zonesCleared >= 3) {
+                finalizarPartida();
+            } else {
+                document.getElementById('quest-phase-frequency').classList.add('hidden-section');
+                document.getElementById('quest-phase-timeline').classList.add('hidden-section');
+                document.getElementById('quest-phase-report').classList.add('hidden-section');
+                document.getElementById('quest-phase-trivia').classList.add('hidden-section');
+                document.getElementById('btn-next-step').classList.add('hidden-section');
+                
+                selectedZoneId = ""; selectedZoneLabel = "";
+                alert("¡Zona completada! El escáner anatómico se ha reiniciado. Por favor selecciona otro punto corporal en el mapa interactivo.");
+            }
+        }
+    }
+
+    function finalizarPartida() {
+        document.getElementById('screen-game').style.display = 'none';
+        document.getElementById('screen-game-over').classList.remove('hidden-section');
+
+        document.getElementById('final-xp').innerText = `${scoreXP} XP`;
+        document.getElementById('final-lives').innerText = `❤️ ${lives}`;
+
+        let mainTitle = document.getElementById('end-game-title');
+        let subTitle = document.getElementById('end-game-subtitle');
+
+        if (lives <= 0) {
+            mainTitle.innerText = "❌ Misión Crítica: Agotamiento Severo";
+            mainTitle.style.color = "var(--game-error)";
+            subTitle.innerText = `Lo sentimos, ${pName}. Has consumido tu reserva de salud física por acumular errores mecánicos.`;
+        } else {
+            mainTitle.innerText = "🏆 Misión Ergonomía Completada";
+            mainTitle.style.color = "var(--game-success)";
+            subTitle.innerText = `Excelente desempeño, Operador ${pName}. Has mapeado exitosamente tus factores de riesgo biomecánico.`;
+        }
+
+        let ulResultados = document.getElementById('final-prescriptions');
+        ulResultados.innerHTML = "";
+
+        let añadidas = [];
+        logsEvaluados.forEach(item => {
+            if(!añadidas.includes(item.zona)){
+                añadidas.push(item.zona);
+                let li = document.createElement('li');
+                li.style.marginBottom = "12px";
+                li.innerHTML = catalogoPrescripciones[item.zona] || catalogoPrescripciones['default'];
+                ulResultados.appendChild(li);
+            }
+        });
+
+        if(añadidas.length === 0) {
+            let li = document.createElement('li');
+            li.innerHTML = catalogoPrescripciones['default'];
+            ulResultados.appendChild(li);
+        }
+    }
+</script>
+</body>
+</html>
